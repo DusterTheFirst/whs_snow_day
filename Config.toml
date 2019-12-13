@@ -1,0 +1,6 @@
+[endpoints]
+no_school_posts = "https://wellesleyps.org/whs/wp-json/wp/v2/posts?categories=33&search=%22no%20school%22"
+discord_webhook = ""
+
+[files]
+previous_posts = "preposts.json"
