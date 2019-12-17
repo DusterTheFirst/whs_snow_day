@@ -1,6 +1,7 @@
-use serde_json::Error as JSONError;
 use reqwest::Error as ReqError;
+use serde_json::Error as JSONError;
 use std::collections::hash_map::DefaultHasher;
+use std::fmt::{Display, Formatter, Result as FmtResult};
 use std::fs::{self, File};
 use std::hash::{Hash, Hasher};
 use std::io::Error as IOError;
@@ -9,9 +10,7 @@ use crate::config::StaticConfig;
 use crate::post::{Post, PrePosts};
 
 #[inline]
-pub fn fetch_new_posts(
-    config: &StaticConfig,
-) -> Result<Option<Vec<Post>>, FetchPostError> {
+pub fn fetch_new_posts(config: &StaticConfig) -> Result<Option<Vec<Post>>, FetchPostError> {
     trace!(
         r#"Making request to "{}""#,
         config.endpoints.no_school_posts
@@ -51,7 +50,17 @@ pub fn fetch_new_posts(
 pub enum FetchPostError {
     IO(IOError),
     JSON(JSONError),
-    Reqwest(ReqError)
+    Reqwest(ReqError),
+}
+
+impl Display for FetchPostError {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        match self {
+            Self::IO(e) => write!(f, "IO Error: {}", e),
+            Self::JSON(e) => write!(f, "JSON Error: {}", e),
+            Self::Reqwest(e) => write!(f, "Reqwest Error: {}", e),
+        }
+    }
 }
 
 impl From<IOError> for FetchPostError {

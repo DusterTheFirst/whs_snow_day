@@ -47,7 +47,7 @@ fn main() {
     // Run a loop forever
     loop {
         match fetch::fetch_new_posts(&config) {
-            Err(e) => error!("Failed fetching new posts: {:?}", e),
+            Err(e) => error!("Failed fetching new posts: {}", e),
             Ok(posts) => {
                 if let Some(posts) = posts {
                     // Alert about them
@@ -56,17 +56,23 @@ fn main() {
                         posts.iter().map(|x| &x.title).collect::<Vec<_>>()
                     );
 
+                    #[cfg(not(debug_assertions))]
+                    let webhooks = &config.webhooks.discord;
+                    #[cfg(debug_assertions)]
+                    let webhooks = &config.webhooks.discord[..1];
+
                     for post in posts {
-                        for webhook in &config.webhooks.discord {
+                        for webhook in webhooks {
                             match alert::alert_discord(webhook, &post) {
                                 Ok(_) => trace!(
                                     r#"Successfully alerted discord webhook "{}" for post "{}""#,
                                     webhook,
                                     post.title
                                 ),
-                                Err(e) => {
-                                    error!(r#"Failed to alert discord webhook "{}" for post "{}": {:?}"#, webhook, post.title, e)
-                                }
+                                Err(e) => error!(
+                                    r#"Failed to alert discord webhook "{}" for post "{}": {}"#,
+                                    webhook, post.title, e
+                                ),
                             }
                         }
                     }
