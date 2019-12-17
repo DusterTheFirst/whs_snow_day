@@ -57,8 +57,7 @@ fn main() {
                     );
 
                     for post in posts {
-                        for webhook in &config.webhooks.discord[..1] {
-                            // FIXME:
+                        for webhook in &config.webhooks.discord {
                             match alert::alert_discord(webhook, &post) {
                                 Ok(_) => trace!(
                                     r#"Successfully alerted discord webhook "{}" for post "{}""#,
