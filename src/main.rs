@@ -2,92 +2,59 @@
 extern crate log;
 
 use std::collections::hash_map::DefaultHasher;
-use std::fs::{self, File};
+use std::fs;
 use std::hash::{Hash, Hasher};
 use std::time::Duration;
 
 mod config;
 mod post;
+mod utils;
+mod fetch;
 
-use config::StaticConfig;
+use config::{ConfigLoadError, StaticConfig};
 use post::{Post, PrePosts};
+use utils::{panic_error, FileInitError};
 
 fn main() {
     // Load .env
-    load_dotenv();
+    utils::load_dotenv();
 
     // Init logger
     pretty_env_logger::init();
 
     // Load the config
-    let config: StaticConfig = toml::from_str(&fs::read_to_string("Config.toml").unwrap()).unwrap();
+    let config = match StaticConfig::load_from_file("Config.toml") {
+        Err(ConfigLoadError::IO(e)) => {
+            panic_error(&format!("Unable to open or read config file: {:?}", e))
+        }
+        Err(ConfigLoadError::TOML(e)) => {
+            panic_error(&format!("Unable to parse toml file: {:?}", e))
+        }
+        Ok(config) => config,
+    };
     trace!("{:#?}", config);
 
     // Create the file
-    if File::open(&config.files.previous_posts).is_err() {
-        let file = File::create(&config.files.previous_posts).unwrap();
-
-        serde_json::to_writer(
-            file,
-            &PrePosts {
-                hash: 0,
-                posts: vec![],
-            },
-        )
-        .unwrap()
-    }
+    let postsfile: fs::File = match utils::init_file_if_not_exists::<PrePosts>(&config.files.previous_posts) {
+        Err(FileInitError::IO(e)) => {
+            panic_error(&format!("Unable to open or create posts file: {:?}", e))
+        }
+        Err(FileInitError::JSON(e)) => {
+            panic_error(&format!("Unable to write json to file: {:?}", e))
+        }
+        Ok(f) => {
+            info!(
+                r#"File "{}" not found, creating it now."#,
+                config.files.previous_posts
+            );
+            f
+        }
+    };
 
     // Run a loop forever
     loop {
-        trace!(
-            r#"Making request to "{}""#,
-            config.endpoints.no_school_posts
-        );
+        fetch::fetch_new_posts(config, postsfile);
 
-        // Get the posts
-        let posts: Vec<Post> = reqwest::get(&config.endpoints.no_school_posts)
-            .unwrap()
-            .json()
-            .unwrap();
-        trace!("{:#?}", posts);
-
-        // Calculate hash
-        let mut hasher = DefaultHasher::new();
-        posts.hash(&mut hasher);
-        let hash = hasher.finish();
-
-        // Read previous posts
-        let preposts: PrePosts =
-            serde_json::from_reader(File::open(&config.files.previous_posts).unwrap()).unwrap();
-
-        if hash != preposts.hash {
-            // Alert about them
-            info!(
-                "New Alerts:\n{:#?}",
-                posts[0..posts.len() - preposts.posts.len()]
-                    .iter()
-                    .map(|x| &x.title)
-                    .collect::<Vec<_>>()
-            );
-
-            // Update the file
-            fs::write(
-                &config.files.previous_posts,
-                serde_json::to_vec_pretty(&PrePosts { hash, posts }).unwrap(),
-            )
-            .unwrap();
-        } else {
-            trace!("no change");
-        }
-
-        std::thread::sleep(Duration::from_secs(1));
+        std::thread::sleep(Duration::from_secs(5));
     }
-}
-
-fn load_dotenv() {
-    #[cfg(debug_assertions)]
-    dotenv::from_filename(".debug.env").ok();
-
-    #[cfg(not(debug_assertions))]
-    dotenv::from_filename(".release.env").ok();
 }
