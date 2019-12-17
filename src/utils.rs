@@ -29,11 +29,11 @@ pub fn init_file_if_not_exists<T: Default + Serialize>(
 
                 serde_json::to_writer(&file, &T::default())?;
 
-                return Ok(file);
+                Ok(file)
             }
-            _ => return Err(FileInitError::from(e)),
+            _ => Err(FileInitError::from(e)),
         },
-        Ok(f) => return Ok(f),
+        Ok(f) => Ok(f),
     }
 }
 

@@ -1,37 +1,25 @@
+use serde_json::Error as JSONError;
+use reqwest::Error as ReqError;
 use std::collections::hash_map::DefaultHasher;
 use std::fs::{self, File};
 use std::hash::{Hash, Hasher};
-use std::time::Duration;
+use std::io::Error as IOError;
 
-use crate::config::{ConfigLoadError, StaticConfig};
+use crate::config::StaticConfig;
 use crate::post::{Post, PrePosts};
-use crate::utils::{panic_error, FileInitError};
 
 #[inline]
-pub fn fetch_new_posts(config: StaticConfig, postsfile: File) -> Result<Error, Option<Vec<Post>>> {
+pub fn fetch_new_posts(
+    config: &StaticConfig,
+    postsfile: &File,
+) -> Result<Option<Vec<Post>>, FetchPostError> {
     trace!(
         r#"Making request to "{}""#,
         config.endpoints.no_school_posts
     );
 
-    let mut response = match reqwest::get(&config.endpoints.no_school_posts) {
-        Err(e) => {
-            warn!("Problem fetching the school posts: {:?}", e);
-
-            return None;
-        }
-        Ok(response) => response,
-    };
-
     // Get the posts
-    let posts: Vec<Post> = match response.json() {
-        Err(e) => {
-            warn!("Problem parsing the school posts: {:?}", e);
-
-            return None;
-        }
-        Ok(posts) => posts,
-    };
+    let posts: Vec<Post> = reqwest::get(&config.endpoints.no_school_posts)?.json()?;
     trace!("{:#?}", posts);
 
     // Calculate hash
@@ -40,43 +28,47 @@ pub fn fetch_new_posts(config: StaticConfig, postsfile: File) -> Result<Error, O
     let hash = hasher.finish();
 
     // Parse previous posts
-    let preposts: PrePosts = match serde_json::from_reader(&postsfile) {
-        Err(e) => {
-            error!("Unable to parse previous posts file: {:?}", e);
-
-            return;
-        }
-        Ok(posts) => posts,
-    };
+    let preposts: PrePosts = serde_json::from_reader(postsfile)?;
 
     if hash != preposts.hash {
-        // Alert about them
-        info!(
-            "New Alerts:\n{:#?}",
-            posts[0..posts.len() - preposts.posts.len()]
-                .iter()
-                .map(|x| &x.title)
-                .collect::<Vec<_>>()
-        );
-
-        // Serialize the file contents
-        let contents = match serde_json::to_vec_pretty(&PrePosts { hash, posts }) {
-            Err(e) => {
-                error!("Unable to serialze new posts to json: {:?}", e);
-                return;
-            }
-            Ok(c) => c,
-        };
+        let new_posts = Vec::from(&posts[0..posts.len() - preposts.posts.len()]);
 
         // Update the file
-        match fs::write(&config.files.previous_posts, contents) {
-            Err(e) => {
-                error!("Unable to serialze new posts to json: {:?}", e);
-                return;
-            }
-            Ok(()) => trace!("Updated previous posts"),
-        }
+        fs::write(
+            &config.files.previous_posts,
+            serde_json::to_vec_pretty(&PrePosts { hash, posts })?,
+        )?;
+        trace!("Updated previous posts");
+
+        Ok(Some(new_posts))
     } else {
         trace!("No change");
+
+        Ok(None)
+    }
+}
+
+#[derive(Debug)]
+pub enum FetchPostError {
+    IO(IOError),
+    JSON(JSONError),
+    Reqwest(ReqError)
+}
+
+impl From<IOError> for FetchPostError {
+    fn from(e: IOError) -> Self {
+        Self::IO(e)
+    }
+}
+
+impl From<JSONError> for FetchPostError {
+    fn from(e: JSONError) -> Self {
+        Self::JSON(e)
+    }
+}
+
+impl From<ReqError> for FetchPostError {
+    fn from(e: ReqError) -> Self {
+        Self::Reqwest(e)
     }
 }

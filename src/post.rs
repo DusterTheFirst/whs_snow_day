@@ -6,7 +6,7 @@ pub struct PrePosts {
     pub hash: u64
 }
 
-#[derive(Debug, Deserialize, Serialize, Hash)]
+#[derive(Debug, Deserialize, Serialize, Hash, Clone)]
 pub struct Post {
     pub id: u32,
     pub date: String,
@@ -34,7 +34,7 @@ mod nested_rendered {
     pub fn deserialize<'j, D: Deserializer<'j>>(deserializer: D) -> Result<String, D::Error> {
         Rendered::deserialize(deserializer).map(|a| a.rendered)
     }
-    pub fn serialize<S: Serializer>(value: &String, serializer: S) -> Result<S::Ok, S::Error> {
+    pub fn serialize<S: Serializer>(value: &str, serializer: S) -> Result<S::Ok, S::Error> {
         Rendered::serialize(
             &Rendered {
                 rendered: value.to_string(),
