@@ -11,7 +11,6 @@ use crate::post::{Post, PrePosts};
 #[inline]
 pub fn fetch_new_posts(
     config: &StaticConfig,
-    postsfile: &File,
 ) -> Result<Option<Vec<Post>>, FetchPostError> {
     trace!(
         r#"Making request to "{}""#,
@@ -28,7 +27,7 @@ pub fn fetch_new_posts(
     let hash = hasher.finish();
 
     // Parse previous posts
-    let preposts: PrePosts = serde_json::from_reader(postsfile)?;
+    let preposts: PrePosts = serde_json::from_reader(File::open(&config.files.previous_posts)?)?;
 
     if hash != preposts.hash {
         let new_posts = Vec::from(&posts[0..posts.len() - preposts.posts.len()]);

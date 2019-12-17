@@ -1,7 +1,6 @@
 #[macro_use]
 extern crate log;
 
-use std::fs;
 use std::time::Duration;
 
 mod config;
@@ -10,7 +9,7 @@ mod post;
 mod utils;
 
 use config::{ConfigLoadError, StaticConfig};
-use post::{PrePosts};
+use post::PrePosts;
 use utils::{panic_error, FileInitError};
 
 fn main() {
@@ -33,38 +32,26 @@ fn main() {
     trace!("{:#?}", config);
 
     // Create the file
-    let postsfile: fs::File =
-        match utils::init_file_if_not_exists::<PrePosts>(&config.files.previous_posts) {
-            Err(FileInitError::IO(e)) => {
-                panic_error(&format!("Unable to open or create posts file: {:?}", e))
-            }
-            Err(FileInitError::JSON(e)) => {
-                panic_error(&format!("Unable to write json to file: {:?}", e))
-            }
-            Ok(f) => {
-                info!(
-                    r#"File "{}" not found, creating it now."#,
-                    config.files.previous_posts
-                );
-                f
-            }
-        };
+    match utils::init_file_if_not_exists::<PrePosts>(&config.files.previous_posts) {
+        Err(FileInitError::IO(e)) => {
+            panic_error(&format!("Unable to open or create posts file: {:?}", e))
+        }
+        Err(FileInitError::JSON(e)) => {
+            panic_error(&format!("Unable to write json to file: {:?}", e))
+        }
+        _ => {}
+    };
 
     // Run a loop forever
     loop {
-        match fetch::fetch_new_posts(&config, &postsfile) {
-            Err(e) => {
-                error!("Failed fetching new posts: {:?}", e)
-            }
+        match fetch::fetch_new_posts(&config) {
+            Err(e) => error!("Failed fetching new posts: {:?}", e),
             Ok(posts) => {
                 if let Some(posts) = posts {
                     // Alert about them
                     info!(
                         "New Alerts:\n{:#?}",
-                        posts
-                            .iter()
-                            .map(|x| &x.title)
-                            .collect::<Vec<_>>()
+                        posts.iter().map(|x| &x.title).collect::<Vec<_>>()
                     );
                 }
             }

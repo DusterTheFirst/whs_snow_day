@@ -21,19 +21,24 @@ pub fn load_dotenv() {
 #[inline]
 pub fn init_file_if_not_exists<T: Default + Serialize>(
     filename: &str,
-) -> Result<File, FileInitError> {
+) -> Result<bool, FileInitError> {
     match File::open(filename) {
         Err(e) => match e.kind() {
             ErrorKind::NotFound => {
+                info!(
+                    r#"File "{}" not found, creating it now."#,
+                    filename
+                );
+
                 let file = File::create(filename)?;
 
                 serde_json::to_writer(&file, &T::default())?;
 
-                Ok(file)
+                Ok(true)
             }
             _ => Err(FileInitError::from(e)),
         },
-        Ok(f) => Ok(f),
+        Ok(_) => Ok(false),
     }
 }
 
