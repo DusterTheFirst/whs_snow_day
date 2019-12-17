@@ -11,13 +11,12 @@ pub fn alert_discord(webhook: &str, post: &Post) -> Result<()> {
     client
         .post(webhook)
         .json(&DiscordWebhook {
-            content: Some(format!("@everyone No school {}!", post.date.format("%A %B %e, %Y"))),
+            content: Some(format!("@everyone {}", post.title)),
             embeds: Some(vec![DiscordEmbed {
                 title: Some(post.title.clone()),
                 r#type: DiscordWebhookType::Rich,
                 description: Some(format!(
-                    "There has been a school cancelaton on {} due to the weather\nFor more information, click the title of the embed or [this link here]({})",
-                    post.date.format("%A %B %e, %Y"),
+                    "There has been an urgent alert for WHS issued\nFor more information, click the title of the embed or [this link here]({})",
                     post.link
                 )),
                 url: Some(post.link.clone()),
