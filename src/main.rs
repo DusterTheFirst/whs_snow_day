@@ -31,7 +31,6 @@ fn main() {
         }
         Ok(config) => config,
     };
-    trace!("{:#?}", config);
 
     // Create the file
     match utils::init_file_if_not_exists::<PrePosts>(&config.files.previous_posts) {

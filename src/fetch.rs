@@ -18,7 +18,6 @@ pub fn fetch_new_posts(config: &StaticConfig) -> Result<Option<Vec<Post>>, Fetch
 
     // Get the posts
     let posts: Vec<Post> = reqwest::get(&config.endpoints.no_school_posts)?.json()?;
-    trace!("{:#?}", posts);
 
     // Calculate hash
     let mut hasher = DefaultHasher::new();
