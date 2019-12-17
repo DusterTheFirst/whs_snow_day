@@ -6,7 +6,8 @@ use std::fs;
 #[derive(Debug, Deserialize)]
 pub struct StaticConfig {
     pub endpoints: EndpointsConfig,
-    pub files: FilesConfig
+    pub files: FilesConfig,
+    pub webhooks: WebhooksConfig
 }
 
 #[derive(Debug, Deserialize)]
@@ -17,6 +18,11 @@ pub struct EndpointsConfig {
 #[derive(Debug, Deserialize)]
 pub struct FilesConfig {
     pub previous_posts: String
+}
+
+#[derive(Debug, Deserialize)]
+pub struct WebhooksConfig {
+    pub discord: Vec<String>
 }
 
 impl StaticConfig {

@@ -3,10 +3,12 @@ extern crate log;
 
 use std::time::Duration;
 
+mod alert;
 mod config;
 mod fetch;
 mod post;
 mod utils;
+mod webhook;
 
 use config::{ConfigLoadError, StaticConfig};
 use post::PrePosts;
@@ -53,6 +55,22 @@ fn main() {
                         "New Alerts:\n{:#?}",
                         posts.iter().map(|x| &x.title).collect::<Vec<_>>()
                     );
+
+                    for post in posts {
+                        for webhook in &config.webhooks.discord[..1] {
+                            // FIXME:
+                            match alert::alert_discord(webhook, &post) {
+                                Ok(_) => trace!(
+                                    r#"Successfully alerted discord webhook "{}" for post "{}""#,
+                                    webhook,
+                                    post.title
+                                ),
+                                Err(e) => {
+                                    error!(r#"Failed to alert discord webhook "{}" for post "{}": {:?}"#, webhook, post.title, e)
+                                }
+                            }
+                        }
+                    }
                 }
             }
         };

@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use chrono::naive::NaiveDateTime;
 
 #[derive(Debug, Deserialize, Serialize, Default)]
 pub struct PrePosts {
@@ -9,10 +10,10 @@ pub struct PrePosts {
 #[derive(Debug, Deserialize, Serialize, Hash, Clone)]
 pub struct Post {
     pub id: u32,
-    pub date: String,
-    pub date_gmt: String,
-    pub modified: String,
-    pub modified_gmt: String,
+    pub date: NaiveDateTime,
+    pub date_gmt: NaiveDateTime,
+    pub modified: NaiveDateTime,
+    pub modified_gmt: NaiveDateTime,
     pub slug: String,
     pub link: String,
     #[serde(with = "nested_rendered")]
