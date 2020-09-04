@@ -1,10 +1,10 @@
-use serde::{Deserialize, Serialize};
 use chrono::naive::NaiveDateTime;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize, Default)]
 pub struct PrePosts {
     pub posts: Vec<Post>,
-    pub hash: u64
+    pub hash: u64,
 }
 
 #[derive(Debug, Deserialize, Serialize, Hash, Clone)]

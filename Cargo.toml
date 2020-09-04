@@ -1,5 +1,5 @@
 [package]
-name = "whs_snow_day"
+name = "whs_urgent_alerts"
 version = "0.1.0"
 authors = ["DusterTheFirst <14093962+DusterTheFirst@users.noreply.github.com>"]
 edition = "2018"
@@ -8,10 +8,15 @@ edition = "2018"
 
 [dependencies]
 log = "0.4.8"
-pretty_env_logger = "0.3.1"
+pretty_env_logger = "0.4.0"
 dotenv = "0.15.0"
-serde = {version = "1.0.104", features=["derive"]}
-serde_json = "1.0.44"
-toml = "0.5.5"
-reqwest = "0.9.24"
-chrono = {version = "0.4.10", features = ["serde"]}
+serde = { version = "1.0.104", features = ["derive"] }
+serde_json = "1.0.48"
+toml = "0.5.6"
+reqwest = { version = "0.10.4", features = ["json"] }
+chrono = { version = "0.4.11", features = ["serde"] }
+tokio = { version = "0.2.13", features = ["macros"] }
+structopt = "0.3.11"
+sled = "0.31.0"
+bincode = "1.2.1"
+colored = "1.9.3"

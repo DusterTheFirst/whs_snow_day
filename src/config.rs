@@ -1,33 +1,33 @@
 use serde::Deserialize;
-use toml::de::Error as TomlError;
-use std::io::Error as IOError;
 use std::fs;
+use std::io::Error as IOError;
+use std::path::Path;
+use toml::de::Error as TomlError;
 
 #[derive(Debug, Deserialize)]
 pub struct StaticConfig {
     pub endpoints: EndpointsConfig,
     pub files: FilesConfig,
-    pub webhooks: WebhooksConfig
+    pub webhooks: WebhooksConfig,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct EndpointsConfig {
-    pub no_school_posts: String
+    pub no_school_posts: String,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct FilesConfig {
-    pub previous_posts: String
+    pub previous_posts: String,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct WebhooksConfig {
-    pub discord: Vec<String>
+    pub discord: Vec<String>,
 }
 
 impl StaticConfig {
-    #[inline]
-    pub fn load_from_file(filename: &str) -> Result<Self, ConfigLoadError> {
+    pub fn load_from_file<S: AsRef<Path>>(filename: S) -> Result<Self, ConfigLoadError> {
         Ok(toml::from_str(&fs::read_to_string(filename)?)?)
     }
 }
@@ -35,7 +35,7 @@ impl StaticConfig {
 #[derive(Debug)]
 pub enum ConfigLoadError {
     TOML(TomlError),
-    IO(IOError)
+    IO(IOError),
 }
 
 impl From<IOError> for ConfigLoadError {

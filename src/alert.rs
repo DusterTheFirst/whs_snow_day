@@ -4,7 +4,7 @@ use crate::webhook::discord::{
 };
 use reqwest::Result;
 
-pub fn alert_discord(webhook: &str, post: &Post) -> Result<()> {
+pub async fn alert_discord(webhook: &str, post: &Post) -> Result<()> {
     info!(r#"Alerting discord webhook "{}""#, webhook);
 
     let client = reqwest::Client::new();
@@ -36,7 +36,7 @@ pub fn alert_discord(webhook: &str, post: &Post) -> Result<()> {
             avatar_url: None,
             tts: None
         })
-        .send()?;
+        .send().await?;
 
     Ok(())
 }

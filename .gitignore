@@ -3,3 +3,4 @@
 preposts.json
 .DS_Store
 Config.toml
+db/

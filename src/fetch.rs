@@ -9,15 +9,17 @@ use std::io::Error as IOError;
 use crate::config::StaticConfig;
 use crate::post::{Post, PrePosts};
 
-#[inline]
-pub fn fetch_new_posts(config: &StaticConfig) -> Result<Option<Vec<Post>>, FetchPostError> {
+pub async fn fetch_new_posts(config: &StaticConfig) -> Result<Option<Vec<Post>>, FetchPostError> {
     trace!(
         r#"Making request to "{}""#,
         config.endpoints.no_school_posts
     );
 
     // Get the posts
-    let posts: Vec<Post> = reqwest::get(&config.endpoints.no_school_posts)?.json()?;
+    let posts: Vec<Post> = reqwest::get(&config.endpoints.no_school_posts)
+        .await?
+        .json()
+        .await?;
 
     // Calculate hash
     let mut hasher = DefaultHasher::new();
